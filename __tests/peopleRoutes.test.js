@@ -20,8 +20,8 @@ describe('/api/people routes', () => {
   const person2 = { name: 'russell', isAttending: false };
   const person3 = { name: 'ryan', isAttending: true };
 
-  const dish1 = { name: 'turkey', description: 'delicious briney turkey' };
-  const dish2 = { name: 'pie', description: 'delicious pumpkiney pie' };
+  const dish1 = { name: 'turkey', description: 'delicious briney turkey' , spoiled: false };
+  const dish2 = { name: 'pie', description: 'delicious pumpkiney pie' , spoiled: true };
   describe('GET to /api/people', () => {
     // example test using vanilla promise syntax (no async/await)
     it('should retrieve all people if no params are given', () => {
@@ -105,32 +105,111 @@ describe('/api/people routes', () => {
           Person.create(person2),
           Person.create(person3),
         ]);
-
+        const dish1 = { name: 'turkey', description: 'delicious briney turkey', spoiled: true };
+        const dish2 = { name: 'pie', description: 'delicious pumpkiney pie', spoiled: true };
+  
         const [turk, pie] = await Promise.all([
           Dish.create({ ...dish1, personId: mark.id }),
           Dish.create({ ...dish2, personId: ryan.id }),
         ]);
         // your code below
+        const includeResponse = await request(app)
+        .get('/api/people/?include_dishes=true')
+        .expect('Content-Type', /json/) // you can still chain the built in supertest methods if you want when using async/await
+        .expect(200)
+
+      const includePeople = includeResponse.body
+      expect(includePeople.length).toBe(2)
+      expect(includePeople).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining(dish1),
+          expect.objectContaining(dish2),
+        ])
+      )   
       } catch (err) {
-        fail(err);
+        fail(err)
       }
-    });
-  });
-  xdescribe('POST to /api/people', () => {
+    })
+  })
+  describe('POST to /api/people', () => {
     it('should create a new person and return that persons information if all the required information is given', async () => {
+      //Use http://localhost:3000/ to make edits to database and change CRUD
       // HINT: You will be sending data then checking response. No pre-seeding required
+      const sam = { name: 'Sam', isAttending: true };
+      const postResponse = await request(app).post('/api/people/').send(sam)
+
+      //test API Response
+      expect(postResponse.statusCode).toBe(200);
+      expect(postResponse.headers['content-type']).toEqual(
+          expect.stringContaining('json')
+          )
+      const newPerson = postResponse.body;
+      expect(newPerson).toEqual(expect.objectContaining(sam))
+
+      const apiSam = await Person.findAll({
+        where: {
+          name: sam.name,
+        }
+      })
+      expect(apiSam).toEqual([expect.objectContaining(sam)])
+
       // Make sure you test both the API response and whats inside the database anytime you create, update, or delete from the database
     });
-    it('should return status code 400 if missing required information', async () => {});
+    it('should return status code 400 if missing required information', async () => {
+      const blankName = { name:'', isAttending: false }
+      const postFailResponseNext = await request(app).post('/api/people/').send(blankName)
+      expect(postFailResponseNext.statusCode).toBe(400)
+    });
   });
 
-  xdescribe('PUT to /api/people/:id', () => {
-    it('should update a persons information', async () => {});
-    it('should return a 400 if given an invalid id', async () => {});
+  describe('PUT to /api/people/:id', () => {
+    it('should update a persons information', async () => {
+      const smith = { name: 'Smith', isAttending: true }
+      const smither = await Person.create(smith)
+      const smithResponse = await request(app).put(`/api/people/${smither.id}`).send({ name: 'Smith', isAttending: false })
+      //test API Response
+      expect(smithResponse.statusCode).toBe(200);
+      expect(smithResponse.headers['content-type']).toEqual(
+          expect.stringContaining('json')
+          );
+      const smithPerson = smithResponse.body[0]
+      expect(smithPerson.name).toEqual('Smith')
+      expect(smithPerson.isAttending).toEqual(false)
+
+
+      const apiSmith = await Person.findAll({
+        where: {
+          name: smith.name,
+        }
+      });
+      expect(apiSmith[0].name).toEqual('Smith')
+      expect(apiSmith[0].isAttending).toEqual(false)
+    });
+    it('should return a 400 if given an invalid id', async () => {
+      const wrongUpdate = await request(app).put(`/api/people/23`)
+      .send({ name: 'Smith', isAttending: true })
+      expect(wrongUpdate.statusCode).toBe(400)
+    });
   });
 
-  xdescribe('DELETE to /api/people/:id', () => {
-    it('should remove a person from the database', async () => {});
-    it('should return a 400 if given an invalid id', async () => {});
+  describe('DELETE to /api/people/:id', () => {
+    it('should remove a person from the database', async () => {
+      const jacob = { name: 'Jacob', isAttending: true }
+      let jacobPerson = await Person.create(jacob)
+      //test API Response
+      let result = await Person.findAll()
+      let jacobResult = result[0].dataValues
+      expect(jacobResult.name).toBe('Jacob')
+      const deleteJacob = await request(app).delete(`/api/people/${jacobPerson.id}`)
+      expect(deleteJacob.statusCode).toBe(200);
+      
+      let jacobDelete = await Person.findAll()
+      console.log(jacobDelete)
+      expect(jacobDelete).not.toEqual(expect.objectContaining(jacob))
+    });
+    it('should return a 400 if given an invalid id', async () => {
+      const deleteErr = await request(app).delete(`/api/people/23`)
+      expect(deleteErr.statusCode).toBe(400);
+    });
   });
 });

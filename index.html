@@ -1,0 +1,283 @@
+<html>
+  <head>
+    <script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/react-router-dom/5.0.1/react-router-dom.js'></script>
+<style>
+body {
+  font-family: verdana;
+}
+nav {
+  display: flex;
+  justify-content: space-around;
+}
+
+.selected {
+  background-color: tomato;
+  color: white;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+}
+
+input, button {
+  height: 2rem;
+  font-size: 1rem;
+}
+.people{
+  display: flex;
+  flex-direction: column;
+  max-width:300px;
+}
+.people li{
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+}
+.people button{
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+}
+.dish{
+  display: flex;
+  flex-direction: column;
+  max-width:300px;
+}
+.dish li{
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+}
+.dish button{
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+}
+form{
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+}
+form label{
+  display: flex;
+  flex-direction: column;
+  margin: 20px 0;
+}
+</style>
+  </head>
+  <body>
+    <div id='root'></div>
+    <script type='text/babel'>
+      const API = 'http://localhost:3000/api';
+
+   
+
+      const { render } = ReactDOM;
+      const { Component } = React;
+      const { HashRouter, Route, Link, Switch, Redirect,  } = ReactRouterDOM;
+
+
+      const Nav = ()=> {
+        return (
+          <nav>
+            <Link to='/' >home</Link>
+            <Link to='/createDish'>Create Dish</Link>
+            <Link to='/createPerson' >Create Person</Link>
+            <Link to='/person'>Person</Link>
+            <Link to='/dish'>Dish</Link>
+          </nav>
+        );
+      };
+      const Home = () =>{
+        return (
+            <div>
+                <h3> You can create on the create Person and create Dish tab</h3>
+                <h3> You can update and delete on the Person and Dish tab </h3>
+            </div>
+        )
+      }
+      const Dish = ({dish, deleting, update}) =>{
+        if(dish.length === 0){
+            return <div>loading...</div>
+        }
+       return (
+           <ul className= "dish">
+            {
+                dish.map( dishes => {
+                  return  (
+                      <li key={dishes.id}>
+                        <h2>{dishes.name.toUpperCase()}</h2>
+                        <h4>{dishes.spoiled === true ? `${dishes.name.toUpperCase()} is spoiled`: `${dishes.name.toUpperCase()} is not spoiled, and we should eat.`}</h4>
+                        <button onClick={()=>deleting('dishes',dishes)}>Delete</button>
+                        <button onClick={()=>update('dishes', dishes)}>Update</button>
+                        </li>
+                      )
+                })
+            }
+            </ul>
+       )
+      }
+
+      const People = ({person, deleting, update}) =>{
+          console.log(person)
+        if(person.length === 0){
+            return <div>loading...</div>
+        }
+       return (
+           <ul className= "people">
+            {
+                person.map( people => {
+                  return  (
+                      <li key={people.id}>
+                        <h2>{people.name.toUpperCase()}</h2>
+                        <h4>{people.isAttending === true ? `${people.name} is invited to thanksgiving`: `${people.name} is not invited to thanksgiving`}</h4>
+                        <button onClick={()=>deleting('people',people)}>Delete</button>
+                        <button onClick={()=>update('people',people)}>Update</button>
+                        </li>
+                      )
+                })
+            }
+            </ul>
+       )
+      }
+      class CreateDish extends Component{
+        constructor(){
+          super(); 
+          this.state = {
+            name: '',
+            description:'',
+            spoiled: false
+          };
+          this.create = this.create.bind(this);
+        }
+        create(){
+          this.props.create({ name: this.state.name , description: this.state.description, spoiled: this.state.spoiled })
+            .then(()=> this.props.history.push('/'))
+
+        }
+        render(){
+          const { spoiled, name, description } = this.state;
+          const { create } = this;
+          return (
+            <form onSubmit = { ev => ev.preventDefault() }>
+              <label> Name
+                <input value={ name } placeholder='create Name' onChange={ (ev)=> this.setState({ name: ev.target.value }) }/>
+              </label>
+              <label> Bio
+                <input value={ description } placeholder='create Bio' onChange={ (ev)=> this.setState({ description: ev.target.value }) }/>
+              </label>
+              <label> Is the food spoiled?
+                <select onChange={(ev)=> this.setState({ spoiled: ev.target.value })}>
+                    <option value={false}>False</option>
+                    <option value={true} >True</option>
+                </select>
+              </label>
+              <button onClick={ create }>Create</button>
+            </form>
+          );
+        }
+      }
+
+      class CreatePerson extends Component{
+        constructor(){
+          super(); 
+          this.state = {
+            name: '',
+            isAttending: false
+          };
+          this.create = this.create.bind(this);
+        }
+        create(){
+          this.props.create({ name: this.state.name , isAttending: this.state.isAttending })
+            .then(()=> this.props.history.push('/'))
+
+        }
+        render(){
+          const { name, isAttending } = this.state;
+          const { create } = this;
+          return (
+            <form onSubmit = { ev => ev.preventDefault() }>
+              <label> Name
+                <input value={ name } placeholder='create Name' onChange={ (ev)=> this.setState({ name: ev.target.value }) }/>
+              </label>
+              <label> Are you attending?
+                <select on onChange={(ev)=> this.setState({ isAttending: ev.target.value })}>
+                    <option value={false}>False</option>
+                    <option value={true} >True</option>
+                </select>
+              </label>
+              <button onClick={ create }>Create</button>
+            </form>
+          );
+        }
+      }
+
+      class App extends Component{
+        constructor(){
+          super();
+          this.state = {
+            people:[],
+            dishes:[]
+          };
+        }
+        
+        async componentDidMount(){
+          const people = (await axios.get(`${API}/people`)).data;
+          const dishes = (await axios.get(`${API}/dishes`)).data;
+          this.setState({ people, dishes });
+        }
+        createPeople = async(peoples) =>{
+          const created = (await axios.post(`${API}/people/`, peoples)).data;
+          const people = [...this.state.people, created ];
+          this.setState({ people }); 
+        }
+        createDish = async(dish) =>{
+          const created = (await axios.post(`${API}/dishes/`, dish)).data;
+          const dishes = [...this.state.dishes, created ];
+          this.setState({ dishes }); 
+        }
+        update = async(link, item) =>{
+        if(link === 'people'){
+          const updated = (await axios.put(`${API}/${link}/${item.id}`, { isAttending: !item.isAttending})).data;
+          this.setState({ people : this.state.people.map( person => person.id === updated.id ? updated : person)});
+          window.location.reload()
+        }
+        else if('dishes'){
+          const updated = (await axios.put(`${API}/${link}/${item.id}`, { spoiled: !item.spoiled})).data;
+          this.setState({ dishes : this.state.dishes.map( dish => dish.id === updated.id ? updated : dish)});
+          window.location.reload()
+        }
+        }
+        destroy = async (link,item) =>{
+          await axios.delete(`${API}/${link}/${item.id}`);
+          this.setState({ notes : this.state.people.filter( _item => _item.id !== item.id)});
+          window.location.reload()
+        }
+        render(){
+          if( this.state.length === 0){
+              return <div>loading</div>
+          }
+          console.log(this.state)
+          return (   
+              <HashRouter> 
+                <Route component={Nav} />   
+              <Switch>
+                <Route exact path="/" component ={Home}/>
+                <Route path='/person'  render={ ()=> <People  update ={this.update} deleting ={this.destroy} person={ this.state.people } /> }/>
+                <Route path='/dish'  render={ ()=> <Dish  update ={this.update} deleting ={this.destroy} dish={ this.state.dishes } /> }/>
+                <Route exact path='/createPerson'  render={ ({ history })=> <CreatePerson history={ history } create={ this.createPeople }  peoples={ this.state.people } /> }/>
+                <Route exact path='/createDish'  render={ ({ history })=> <CreateDish history={ history } create={ this.createDish }  dishes={ this.state.dishes } /> }/>
+              </Switch>
+              </HashRouter>
+
+          );
+        }
+
+      }
+      const root = document.querySelector('#root');
+      render(<App />, root);
+    </script>
+  </body>
+</html>

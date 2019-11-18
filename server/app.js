@@ -4,6 +4,7 @@
 
 const express = require("express");
 const app = express();
+const path = require("path");
 
 app.use(express.json());
 
@@ -19,6 +20,9 @@ app.use((err, req, res, next) => {
     res.status(500).send(err);
   }
 });
-
+// index http://localhost:3000/#/
+app.get("/", async(req, res) => {
+  res.sendFile(path.join('/Users/andyferreira/thanksgiving/','/index.html'))
+})
 // need to do this for supertest
 module.exports = { app };
