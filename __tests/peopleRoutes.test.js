@@ -133,17 +133,17 @@ describe('/api/people routes', () => {
   })
   describe('POST to /api/people', () => {
     it('should create a new person and return that persons information if all the required information is given', async () => {
-      //Use http://localhost:3000/ to make edits to database and change CRUD
+
       // HINT: You will be sending data then checking response. No pre-seeding required
       const sam = { name: 'Sam', isAttending: true };
-      const postResponse = await request(app).post('/api/people/').send(sam)
+      const samAdded = await request(app).post('/api/people/').send(sam)
 
       //test API Response
-      expect(postResponse.statusCode).toBe(200);
-      expect(postResponse.headers['content-type']).toEqual(
+      expect(samAdded.statusCode).toBe(200);
+      expect(samAdded.headers['content-type']).toEqual(
           expect.stringContaining('json')
           )
-      const newPerson = postResponse.body;
+      const newPerson = samAdded.body;
       expect(newPerson).toEqual(expect.objectContaining(sam))
 
       const apiSam = await Person.findAll({
@@ -157,8 +157,8 @@ describe('/api/people routes', () => {
     });
     it('should return status code 400 if missing required information', async () => {
       const blankName = { name:'', isAttending: false }
-      const postFailResponseNext = await request(app).post('/api/people/').send(blankName)
-      expect(postFailResponseNext.statusCode).toBe(400)
+      const blankResponse = await request(app).post('/api/people/').send(blankName)
+      expect(blankResponse.statusCode).toBe(400)
     });
   });
 
