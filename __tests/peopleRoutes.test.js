@@ -205,7 +205,7 @@ describe('/api/people routes', () => {
       
       let jacobDelete = await Person.findAll()
       console.log(jacobDelete)
-      expect(jacobDelete).not.toEqual(expect.objectContaining(jacob))
+      expect(jacobDelete).not.toEqual(expect.objectContaining(jacobResult))
     });
     it('should return a 400 if given an invalid id', async () => {
       const deleteErr = await request(app).delete(`/api/people/23`)
