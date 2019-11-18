@@ -138,7 +138,7 @@ describe('/api/people routes', () => {
       const sam = { name: 'Sam', isAttending: true };
       const samAdded = await request(app).post('/api/people/').send(sam)
 
-      //test API Response
+
       expect(samAdded.statusCode).toBe(200);
       expect(samAdded.headers['content-type']).toEqual(
           expect.stringContaining('json')
